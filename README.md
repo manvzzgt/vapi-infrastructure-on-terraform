@@ -22,14 +22,107 @@ Por cada proyecto se generan automáticamente los siguientes recursos en AWS:
 
 ## Requisitos
 
-- [Terraform CLI](https://developer.hashicorp.com/terraform/install) instalado
-- [AWS CLI](https://aws.amazon.com/cli/) instalado y configurado
-- Usuario IAM con permisos para crear recursos S3 e IAM
+### 1. Terraform CLI
 
-### Configurar credenciales AWS
+1. Descarga el ZIP para tu sistema operativo en [developer.hashicorp.com/terraform/install](https://developer.hashicorp.com/terraform/install)
+2. Extrae el archivo `terraform.exe` (Windows) o `terraform` (Mac/Linux)
+3. Muévelo a una carpeta, por ejemplo `C:\terraform\`
+4. Agrega esa carpeta al PATH del sistema:
+   - Windows: Busca "Variables de entorno" → Variables del sistema → `Path` → Editar → Agregar `C:\terraform`
+   - Mac/Linux: Agrega `export PATH=$PATH:/usr/local/terraform` a tu `.bashrc` o `.zshrc`
+5. Verifica la instalación:
+```bash
+terraform -version
+```
+
+---
+
+### 2. AWS CLI
+
+1. Descarga e instala desde [aws.amazon.com/cli](https://aws.amazon.com/cli)
+2. Verifica la instalación:
+```bash
+aws --version
+```
+
+---
+
+### 3. Usuario IAM para Terraform
+
+Crea un usuario IAM en AWS con los siguientes permisos mínimos y genera sus credenciales de acceso programático (Access Key + Secret Key).
+
+**Política IAM requerida:**
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "S3Permissions",
+      "Effect": "Allow",
+      "Action": [
+        "s3:CreateBucket",
+        "s3:PutBucketPublicAccessBlock",
+        "s3:PutBucketVersioning",
+        "s3:PutBucketTagging",
+        "s3:PutEncryptionConfiguration",
+        "s3:GetBucketPolicy",
+        "s3:GetBucketPublicAccessBlock",
+        "s3:GetBucketVersioning",
+        "s3:GetBucketTagging",
+        "s3:GetEncryptionConfiguration",
+        "s3:ListBucket",
+        "s3:GetBucketAcl",
+        "s3:GetBucketCORS",
+        "s3:GetBucketWebsite",
+        "s3:GetBucketLogging",
+        "s3:GetLifecycleConfiguration",
+        "s3:GetReplicationConfiguration",
+        "s3:GetAccelerateConfiguration",
+        "s3:GetBucketRequestPayment",
+        "s3:GetBucketObjectLockConfiguration"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "IAMPermissions",
+      "Effect": "Allow",
+      "Action": [
+        "iam:CreatePolicy",
+        "iam:GetPolicy",
+        "iam:GetPolicyVersion",
+        "iam:ListPolicyVersions",
+        "iam:CreateUser",
+        "iam:GetUser",
+        "iam:TagUser",
+        "iam:AttachUserPolicy",
+        "iam:ListAttachedUserPolicies",
+        "iam:CreateAccessKey",
+        "iam:ListAccessKeys"
+      ],
+      "Resource": "*"
+    }
+  ]
+}
+```
+
+---
+
+### 4. Configurar credenciales AWS
+
+Con las credenciales del usuario IAM creado, ejecuta:
 
 ```bash
 aws configure
+```
+
+Llena los datos solicitados:
+
+```
+AWS Access Key ID: TU_ACCESS_KEY
+AWS Secret Access Key: TU_SECRET_KEY
+Default region name: us-east-1
+Default output format: json
 ```
 
 ---
@@ -78,13 +171,13 @@ terraform output secret_access_key
 ## Ejemplo
 
 ```bash
-terraform apply -var="proyecto=example"
+terraform apply -var="proyecto=proyecto"
 ```
 
 Genera:
-- `example-s3-vapi-grabaciones`
-- `example-vapi-s3-policy`
-- `example-vapi-s3-user`
+- `proyecto-s3-vapi-grabaciones`
+- `proyecto-vapi-s3-policy`
+- `proyecto-vapi-s3-user`
 
 ---
 
@@ -98,3 +191,11 @@ terraform-vapi/
 ├── .gitignore       # Archivos excluidos del repositorio
 └── README.md        # Este archivo
 ```
+
+---
+
+## ⚠️ Seguridad
+
+- Las credenciales de AWS **nunca** se almacenan en los archivos `.tf`.
+- El directorio `.terraform/` y el archivo `terraform.tfstate` están excluidos del repositorio via `.gitignore`.
+- El `terraform.tfstate` puede contener valores sensibles como el `secret_access_key` — **nunca lo compartas ni lo subas a un repo público**.
